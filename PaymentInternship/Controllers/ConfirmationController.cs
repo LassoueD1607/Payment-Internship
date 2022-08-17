@@ -16,8 +16,9 @@ namespace PaymentInternship.Controllers
         static PaymentConfirmation paymentConfirmation;
         private readonly ContextPayment _context;
         private IHubContext<MyHub> _myhub;
-        string connectionId;
-        int timer = 100000000;
+        
+        
+        
 
         public ConfirmationController(ContextPayment context, IHubContext<MyHub> myhub)
         {
@@ -44,29 +45,12 @@ namespace PaymentInternship.Controllers
             paymentConfirmation = pay;
             if (pay.StatusCode == 1)
             {
-                //Status stat = updateStatus(pay);
-                Transaction stat = new Transaction();
-
-                foreach (var transaction in _context.transactions)
-                {
-                    if (String.Equals(transaction.Id,pay.StatusId.ToString()))
-                    {
-                        stat = transaction;
-                        stat.StatusCode = pay.StatusCode;
-                    }
-                }
+                Transaction stat = _context.transactions.Where(c => c.Id == pay.StatusId).FirstOrDefault();
+                stat.StatusCode = pay.StatusCode;
                 _context.transactions.Update(stat);
                 _context.SaveChanges();
            
-                await _myhub.Clients.User(connectionId).SendAsync("askServerResponse", pay.StatusId);
-                
-               
-
-
-
-
-
-
+                await _myhub.Clients.All.SendAsync(pay.StatusId.ToString(), pay.StatusId);
 
             }
             
